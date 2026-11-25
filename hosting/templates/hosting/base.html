@@ -1,0 +1,40 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}Dashboard{% endblock %} · WNBase</title>
+<link rel="icon" href="{% static 'hosting/favicon.png' %}">
+<script defer src="{% static 'hosting/publish.js' %}"></script>
+<link rel="stylesheet" href="{% static 'hosting/site.css' %}">
+{% if clerk_issuer and clerk_key and not demo %}
+<script defer crossorigin="anonymous" src="{{ clerk_issuer }}/npm/@clerk/ui@1/dist/ui.browser.js"></script>
+<script defer crossorigin="anonymous" data-clerk-publishable-key="{{ clerk_key }}" src="{{ clerk_issuer }}/npm/@clerk/clerk-js@6/dist/clerk.browser.js"></script>
+<script defer src="{% static 'hosting/clerk.js' %}"></script>
+{% endif %}
+</head>
+<body>
+<header class="bar">
+  <div class="bar-inner">
+    <a class="brand" href="{% url 'dashboard' %}">wnbase</a>
+    <nav aria-label="Main">
+      <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}aria-current="page"{% endif %}>Explore</a>
+      {% if user.is_authenticated %}
+      <a href="{% url 'workspace' %}">My sites</a>
+      {% if perms.hosting.change_announcement %}<a href="{% url 'announcements' %}">Announcements</a>{% endif %}
+      {% if user.is_staff %}<a href="{% url 'admin:index' %}">Admin</a>{% endif %}
+      {% if demo %}
+      <form action="{% url 'demo-logout' %}" method="post">{% csrf_token %}<button class="quiet">Sign out</button></form>
+      {% else %}<div id="clerk-user"></div>{% endif %}
+      {% else %}<a class="button small" href="{% url 'sign-in' %}">Sign in</a>{% endif %}
+    </nav>
+  </div>
+</header>
+<main class="shell">
+  {% for message in messages %}{% if "deployment" not in message.tags %}<p role="status" class="notice">{{ message }}</p>{% endif %}{% endfor %}
+  {% block content %}{% endblock %}
+</main>
+<footer class="shell foot">WNBase · Web hosting</footer>
+</body>
+</html>

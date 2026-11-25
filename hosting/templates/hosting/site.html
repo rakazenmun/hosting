@@ -1,0 +1,53 @@
+{% extends "hosting/base.html" %}
+{% block title %}{{ site.title }}{% endblock %}
+{% block content %}
+<a class="back" href="{% url 'workspace' %}">← My sites</a>
+<div class="page-heading">
+  <div><h1>{{ site.title }}</h1><p><code>{{ site.public_url }}</code></p></div>
+  <div class="actions">
+    <a class="button secondary" href="{% url 'site-settings' site.pk %}">Site settings</a>
+    {% if site.live and not site.suspended %}<a class="button" href="{{ site.public_url }}">Open site ↗</a>{% endif %}
+  </div>
+</div>
+{% for message in messages %}
+  {% if "deployment" in message.tags and site.live and not site.suspended %}
+  <section class="publish-result" aria-label="Deployment result">
+    <div class="result-text" role="status"><span class="publish-check" aria-hidden="true">✓</span>
+      <div><strong>{{ message }}</strong><br><a href="{{ site.public_url }}">{{ site.public_url }}</a></div>
+    </div>
+    <button type="button" class="button secondary" data-copy-url="{{ site.public_url }}" hidden>Copy link</button>
+    <span class="sr-only" data-copy-status role="status"></span>
+  </section>
+  {% endif %}
+{% endfor %}
+<div class="columns">
+<section class="card">
+  <h2>Deploy a ZIP</h2>
+  {% if site.suspended %}<p>This site is suspended.</p>{% else %}
+  <p>Put <code>index.html</code> at the root of the ZIP. Use relative links for assets. Maximum {{ upload_limit }} MiB and {{ file_limit }} files.</p>
+  <form method="post" enctype="multipart/form-data" data-publish-form>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {{ form.archive.errors }}
+    <div class="upload-area" data-drop-area>
+      <label for="{{ form.archive.id_for_label }}">Site ZIP</label>
+      {{ form.archive }}
+    </div>
+    <p class="publish-control">
+      <button class="button" type="submit" data-publish-button><span class="spinner" aria-hidden="true"></span><span data-publish-label>Publish site</span></button>
+      <span role="status" data-publish-status></span>
+    </p>
+  </form>
+  {% endif %}
+</section>
+<section>
+  <div class="heading"><h2>Deployments</h2></div>
+  <div class="rows">
+    {% for release in deployments %}
+    <article class="row"><div><strong>{{ release.created|date:"M j, Y · g:i A" }}</strong><br><small>{{ release.size|filesizeformat }}</small></div>
+    {% if release.pk == site.live_id %}<span class="status">Current</span>{% endif %}</article>
+    {% empty %}<p class="empty">No deployments yet.</p>{% endfor %}
+  </div>
+</section>
+</div>
+{% endblock %}

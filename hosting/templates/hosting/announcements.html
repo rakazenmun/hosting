@@ -1,0 +1,13 @@
+{% extends "hosting/base.html" %}
+{% block title %}Announcements{% endblock %}
+{% block content %}
+<div class="page-heading"><h1>Announcements</h1>
+  {% if perms.hosting.add_announcement %}<a class="button" href="{% url 'new-announcement' %}">New announcement</a>{% endif %}
+</div>
+<div class="rows">
+{% for item in announcements %}
+<article class="row"><h2><a href="{% url 'edit-announcement' item.pk %}">{{ item.title }}</a></h2>
+<span class="status">{% if item.published %}Published{% else %}Draft{% endif %}</span></article>
+{% empty %}<p class="empty">No announcements yet.</p>{% endfor %}
+</div>
+{% endblock %}

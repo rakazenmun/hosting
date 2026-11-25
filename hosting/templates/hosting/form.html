@@ -1,0 +1,12 @@
+{% extends "hosting/base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<section class="card form-card">
+  <h1>{{ title }}</h1>
+  {% if description %}<p>{{ description }}</p>{% endif %}
+  <form method="post">
+    {% csrf_token %}{{ form.as_p }}
+    <button class="button">{{ action }}</button>
+  </form>
+</section>
+{% endblock %}

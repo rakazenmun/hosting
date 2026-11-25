@@ -1,0 +1,16 @@
+{% extends "hosting/base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block content %}
+<section class="card form-card">
+  <h1>Sign in to WNBase</h1>
+  {% if demo %}
+    <p>Use a local demo account to try hosting and administration.</p>
+    <a class="button" href="{% url 'demo-login' %}">Open demo sign-in</a>
+  {% elif clerk_key and clerk_issuer %}
+    <div id="clerk-sign-in" data-after="{% url 'workspace' %}"></div>
+    <noscript>Enable JavaScript to sign in with Clerk.</noscript>
+  {% else %}
+    <p>Clerk sign-in has not been configured.</p>
+  {% endif %}
+</section>
+{% endblock %}

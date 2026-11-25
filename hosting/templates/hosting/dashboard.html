@@ -1,0 +1,30 @@
+{% extends "hosting/base.html" %}
+{% block content %}
+<section class="hero">
+  <div><h1>wnbase hosting</h1></div>
+  <a class="button" href="{% if user.is_authenticated %}{% url 'new-site' %}{% else %}{% url 'sign-in' %}{% endif %}">Create a site <span aria-hidden="true">↗</span></a>
+</section>
+<div class="columns">
+  <section>
+    <div class="heading"><h2>Published sites</h2><span>{{ sites|length }} listed</span></div>
+    <div class="site-grid">
+      {% for site in sites %}
+      <article class="card">
+        <h3><a href="{{ site.public_url }}">{{ site.title }} ↗</a></h3>
+        <code>/{{ site.owner.handle }}/{{ site.slug }}/</code>
+        {% if site.description %}<p>{{ site.description }}</p>{% endif %}
+        <small>Updated {{ site.live.created|date:"M j, Y" }}</small>
+      </article>
+      {% empty %}<p class="empty">No sites are listed yet.</p>{% endfor %}
+    </div>
+  </section>
+  <section>
+    <div class="heading"><h2>Announcements</h2></div>
+    <div class="updates">
+      {% for item in announcements %}
+      <article><small>{{ item.updated|date:"M j, Y" }}</small><h3>{{ item.title }}</h3>{{ item.body|linebreaks }}</article>
+      {% empty %}<p class="empty">No announcements yet.</p>{% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

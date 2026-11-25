@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: wnbase-hosting
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    startCommand: python manage.py migrate && gunicorn config.wsgi --bind "0.0.0.0:${PORT:-10000}"
+    healthCheckPath: /healthz/
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: PUBLISH_ORIGIN
+        value: https://sites.wnbase.com
+      - key: CLERK_ISSUER
+        sync: false
+      - key: CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: WNBASE_SITE_LIMIT_MIB
+        value: "25"
+      - key: WNBASE_SITE_FILE_LIMIT
+        value: "500"

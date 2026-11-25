@@ -1,0 +1,16 @@
+{% extends "hosting/base.html" %}
+{% block title %}My sites{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><h1>My sites</h1><p>{{ publish_host }}/{{ member.handle }}/</p></div>
+  {% if can_create %}<a class="button" href="{% url 'new-site' %}">Create a site</a>{% endif %}
+</div>
+<div class="rows">
+  {% for site in sites %}
+  <article class="row">
+    <div><h2><a href="{% url 'site' site.pk %}">{{ site.title }}</a></h2><code>/{{ member.handle }}/{{ site.slug }}/</code></div>
+    <span class="status">{% if site.suspended %}Suspended{% elif site.live %}Live{% else %}Draft{% endif %}</span>
+  </article>
+  {% empty %}<p class="empty">Create your first site to reserve its URL.</p>{% endfor %}
+</div>
+{% endblock %}
