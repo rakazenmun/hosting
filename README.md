@@ -40,10 +40,12 @@ One Render web service can route both hostnames to this app. Add `sites.wnbase.c
 - `CLERK_PUBLISHABLE_KEY` to that application's publishable key
 - `DJANGO_SECRET_KEY` to a newly generated secret
 - `DATABASE_URL` to a persistent Postgres connection string, using TLS against the hosted database
+- `CLERK_SECRET_KEY` enables server-side profile lookup for new members. Enter the production secret only in Render.
+- `ADMIN_CLERK_USERNAME` (optional) gives the named Clerk account full Django and WNBase admin access. Sign in and open My Sites once to link the account. Use a username already controlled by the intended administrator.
 - Leave `WNBASE_DEMO` unset.
 - Optional: `WNBASE_SITE_LIMIT_MIB` (default 25) and `WNBASE_SITE_FILE_LIMIT` (default 500). Adjust both to fit the database storage budget.
 
-In Clerk, require usernames and customize the **session token** with this JSON claim:
+In Clerk, require usernames. If you already use this optional **session token** claim, WNBase can provision the username without a profile lookup:
 
 ```json
 {"wnbase_username":"{{user.username}}"}

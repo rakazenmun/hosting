@@ -20,6 +20,8 @@ if not APP_HOST or not PUBLISH_HOST or not CONTENT_HOST or APP_HOST == CONTENT_H
     raise ImproperlyConfigured("Set a content origin on a different host from the dashboard.")
 CLERK_ISSUER = os.getenv("CLERK_ISSUER", "").rstrip("/")
 CLERK_PUBLISHABLE_KEY = os.getenv("CLERK_PUBLISHABLE_KEY", "")
+CLERK_SECRET_KEY = os.getenv("CLERK_SECRET_KEY", "").strip()
+ADMIN_CLERK_USERNAME = os.getenv("ADMIN_CLERK_USERNAME", "").strip()
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "wnbase-local-demo-only" if DEMO else "")
 if not SECRET_KEY:
     raise ImproperlyConfigured("Set DJANGO_SECRET_KEY or enable the local demo.")

@@ -8,6 +8,8 @@ from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.utils.functional import SimpleLazyObject
 
+from .models import Member
+
 
 class HostRouting:
     def __init__(self, get_response):
@@ -51,6 +53,10 @@ def clerk_user(request, fallback):
         return fallback
     request.clerk_subject = subject
     request.clerk_username = claims.get("wnbase_username")
+    if settings.ADMIN_CLERK_USERNAME and Member.objects.filter(
+        user=user, clerk_id=subject, handle=settings.ADMIN_CLERK_USERNAME,
+    ).exists():
+        user.is_staff = user.is_superuser = True
     return user
 
 

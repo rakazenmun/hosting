@@ -14,6 +14,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.decorators.http import require_safe
 
+from .clerk import ClerkProfileError, clerk_profile_username
 from .models import Announcement, Asset, Member, Site
 from .publishing import TYPES, assets_from_zip, publish
 
@@ -72,16 +73,25 @@ def workspace(request):
     member = Member.objects.filter(user=request.user).first()
     if member is None and hasattr(request, "clerk_subject"):
         username = request.clerk_username
+        if username is None:
+            if not settings.CLERK_SECRET_KEY:
+                return page(request, "account", problem="Ask the WNBase administrator to configure Clerk profile access.")
+            try:
+                username = clerk_profile_username(request.clerk_subject)
+            except ClerkProfileError:
+                return page(request, "account", problem="WNBase could not read your Clerk profile. Try again shortly.")
         if not isinstance(username, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", username):
             return page(request, "account", problem="Set a username in your Clerk account, then reload this page.")
         if settings.APP_HOST == settings.PUBLISH_HOST and username.lower() in RESERVED_HANDLES:
             return page(request, "account", problem="Choose a different username in Clerk. This one is reserved by WNBase.")
         try:
-            member, _ = Member.objects.get_or_create(
+            member, created = Member.objects.get_or_create(
                 user=request.user, defaults={"handle": username, "clerk_id": request.clerk_subject},
             )
         except IntegrityError:
             return page(request, "account", problem="That username is already reserved by a WNBase account.")
+        if created and username == settings.ADMIN_CLERK_USERNAME:
+            return redirect("workspace")
     if member is None:
         if not settings.DEMO:
             return page(request, "account", problem="Sign in through Clerk to create a hosting account.")
