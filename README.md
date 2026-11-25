@@ -1,6 +1,6 @@
 # WNBase Hosting prototype
 
-WNBase hosts member sites at `sites.wnbase.com/username/sitename/`. People join from the Render dashboard URL with Clerk, reserve a URL, upload a ZIP, and choose whether to list it publicly. The dashboard shows listed sites and published announcements. Staff can post announcements from the main site and manage moderation through Django Admin.
+WNBase hosts member sites at `sites.wnbase.com/username/sitename/`. People join at `sites.wnbase.com` with Clerk, reserve a URL, upload a ZIP, and choose whether to list it publicly. The dashboard shows listed sites and published announcements. Staff can post announcements from the main site and manage moderation through Django Admin.
 
 ## Run on Windows PowerShell
 
@@ -33,7 +33,8 @@ Pages run with an opaque browser origin. Browser JavaScript can post to an exter
 
 One Render web service can route both hostnames to this app. Add `sites.wnbase.com` as a custom domain in Render and point the Cloudflare `sites` CNAME to the service’s Render hostname. Configure a separate Clerk application for WNBase sign-in and set:
 
-- `APP_ORIGIN` (optional) overrides the dashboard URL. On Render it defaults to the service’s `RENDER_EXTERNAL_URL`.
+- `APP_ORIGIN` (optional) overrides the dashboard URL. Leave it unset to use `PUBLISH_ORIGIN`.
+- `CONTENT_ORIGIN` (optional) serves uploaded files. Leave it unset on Render to use the service’s `RENDER_EXTERNAL_URL`. Keep that hostname enabled and distinct from the dashboard host.
 - `PUBLISH_ORIGIN=https://sites.wnbase.com`
 - `CLERK_ISSUER` to the Clerk Frontend API origin, including `https://`
 - `CLERK_PUBLISHABLE_KEY` to that application's publishable key

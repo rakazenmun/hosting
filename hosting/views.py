@@ -1,5 +1,6 @@
 import re
 from pathlib import PurePosixPath
+from urllib.parse import quote
 
 from django.conf import settings
 from django.contrib import messages
@@ -10,6 +11,7 @@ from django.db.models import F
 from django.forms import BooleanField, CharField, FileField, Form, RegexField, Textarea
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.decorators.http import require_safe
 
 from .models import Announcement, Asset, Member, Site
@@ -17,6 +19,7 @@ from .publishing import TYPES, assets_from_zip, publish
 
 SLUG = r"^[a-z0-9]+(?:-[a-z0-9]+)*\Z"
 MAX_SITES = 3
+RESERVED_HANDLES = {"admin", "announcements", "workspace", "static", "healthz", "sign-in", "demo-login", "demo-logout"}
 
 
 class HandleForm(Form):
@@ -71,6 +74,8 @@ def workspace(request):
         username = request.clerk_username
         if not isinstance(username, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", username):
             return page(request, "account", problem="Set a username in your Clerk account, then reload this page.")
+        if settings.APP_HOST == settings.PUBLISH_HOST and username.lower() in RESERVED_HANDLES:
+            return page(request, "account", problem="Choose a different username in Clerk. This one is reserved by WNBase.")
         try:
             member, _ = Member.objects.get_or_create(
                 user=request.user, defaults={"handle": username, "clerk_id": request.clerk_subject},
@@ -179,6 +184,30 @@ def edit_announcement(request, pk):
 
 
 @require_safe
+def published_frame(request, handle, slug, asset=""):
+    site = get_object_or_404(
+        Site.objects.select_related("owner"),
+        owner__handle=handle, slug=slug, suspended=False, live__isnull=False,
+    )
+    path = asset if asset and not asset.endswith("/") else asset + "index.html"
+    get_object_or_404(Asset.objects.only("id"), deployment_id=site.live_id, path=path)
+    source = f"{settings.CONTENT_ORIGIN}/{handle}/{slug}/{quote(asset)}"
+    if query := request.META.get("QUERY_STRING"):
+        source += "?" + query
+    mime = TYPES[PurePosixPath(path).suffix.lower()]
+    if not mime.startswith("text/html"):
+        return redirect(source)
+    response = render(request, "hosting/published_frame.html", {"site": site, "source": source})
+    response["Content-Security-Policy"] = (
+        "default-src 'none'; style-src 'unsafe-inline'; "
+        f"frame-src {settings.CONTENT_ORIGIN}; frame-ancestors 'none'; base-uri 'none'"
+    )
+    response["Cache-Control"] = "no-cache"
+    return response
+
+
+@require_safe
+@xframe_options_exempt
 def published_asset(request, handle, slug, asset=""):
     path = asset if asset and not asset.endswith("/") else asset + "index.html"
     item = get_object_or_404(
@@ -191,7 +220,8 @@ def published_asset(request, handle, slug, asset=""):
     response = media_response(request, content, mime) if mime.startswith(("video/", "audio/")) else HttpResponse(content, content_type=mime)
     response["Content-Security-Policy"] = (
         "sandbox allow-scripts allow-forms; object-src 'none'; base-uri 'none'; "
-        "worker-src 'none'; form-action https: http:"
+        "worker-src 'none'; form-action https: http:; "
+        f"frame-ancestors {settings.APP_ORIGIN}"
     )
     response["X-Content-Type-Options"] = "nosniff"
     response["Referrer-Policy"] = "no-referrer"

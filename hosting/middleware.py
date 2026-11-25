@@ -15,7 +15,7 @@ class HostRouting:
 
     def __call__(self, request):
         host = urlsplit(f"//{request.get_host()}").hostname
-        if host == settings.PUBLISH_HOST:
+        if host == settings.CONTENT_HOST:
             request.urlconf = "config.published_urls"
         elif host != settings.APP_HOST and request.path != "/healthz/":
             return HttpResponseRedirect(settings.APP_ORIGIN + "/")

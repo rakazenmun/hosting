@@ -7,19 +7,24 @@ from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DEMO = os.getenv("WNBASE_DEMO") == "1"
-APP_ORIGIN = os.getenv("APP_ORIGIN", "http://localhost:8000" if DEMO else os.getenv("RENDER_EXTERNAL_URL", "https://app.wnbase.com"))
 PUBLISH_ORIGIN = os.getenv("PUBLISH_ORIGIN", "http://127.0.0.1:8000" if DEMO else "https://sites.wnbase.com")
+CONTENT_ORIGIN = os.getenv("CONTENT_ORIGIN", os.getenv("RENDER_EXTERNAL_URL", PUBLISH_ORIGIN))
+APP_ORIGIN = os.getenv("APP_ORIGIN", "http://localhost:8000" if DEMO else PUBLISH_ORIGIN)
+PUBLISH_ORIGIN = PUBLISH_ORIGIN.rstrip("/")
+CONTENT_ORIGIN = CONTENT_ORIGIN.rstrip("/")
+APP_ORIGIN = APP_ORIGIN.rstrip("/")
 APP_HOST = urlsplit(APP_ORIGIN).hostname
 PUBLISH_HOST = urlsplit(PUBLISH_ORIGIN).hostname
-if not APP_HOST or not PUBLISH_HOST or APP_HOST == PUBLISH_HOST:
-    raise ImproperlyConfigured("Set distinct dashboard and publishing hosts.")
+CONTENT_HOST = urlsplit(CONTENT_ORIGIN).hostname
+if not APP_HOST or not PUBLISH_HOST or not CONTENT_HOST or APP_HOST == CONTENT_HOST:
+    raise ImproperlyConfigured("Set a content origin on a different host from the dashboard.")
 CLERK_ISSUER = os.getenv("CLERK_ISSUER", "").rstrip("/")
 CLERK_PUBLISHABLE_KEY = os.getenv("CLERK_PUBLISHABLE_KEY", "")
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "wnbase-local-demo-only" if DEMO else "")
 if not SECRET_KEY:
     raise ImproperlyConfigured("Set DJANGO_SECRET_KEY or enable the local demo.")
 DEBUG = DEMO
-ALLOWED_HOSTS = [APP_HOST, PUBLISH_HOST]
+ALLOWED_HOSTS = list({APP_HOST, PUBLISH_HOST, CONTENT_HOST})
 if render_host := os.getenv("RENDER_EXTERNAL_HOSTNAME"):
     ALLOWED_HOSTS.append(render_host)
 CSRF_TRUSTED_ORIGINS = [APP_ORIGIN]

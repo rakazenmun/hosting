@@ -28,3 +28,9 @@ if settings.DEMO:
         path("demo-login/", LoginView.as_view(template_name="hosting/demo_login.html"), name="demo-login"),
         path("demo-logout/", LogoutView.as_view(next_page="dashboard"), name="demo-logout"),
     ]
+
+if settings.APP_HOST == settings.PUBLISH_HOST:
+    urlpatterns += [
+        path("<slug:handle>/<slug:slug>/", views.published_frame),
+        path("<slug:handle>/<slug:slug>/<path:asset>", views.published_frame),
+    ]
